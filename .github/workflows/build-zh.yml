@@ -1,0 +1,43 @@
+# 汉化专用构建：只编译管理器 Lossless.dll，不拉取 NVIDIA / FidelityFX / XeSS SDK。
+name: build-zh
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        working-directory: manager
+        shell: pwsh
+        # 官方构建总是带构建号；留空会导致 EAM_BUILD_NUMBER 未定义而编译失败。
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DEAM_BUILD_NUMBER=7
+
+      - name: Build Lossless.dll
+        shell: pwsh
+        run: cmake --build manager/build --config Release --target Lossless
+
+      - name: Verify output
+        shell: pwsh
+        run: |
+          $dll = "manager/build/Release/Lossless.dll"
+          if (-not (Test-Path $dll)) { throw "Build output missing: $dll" }
+          $hash = (Get-FileHash -Algorithm SHA256 $dll).Hash
+          $size = (Get-Item $dll).Length
+          "Built: $dll"
+          "Size: $size bytes"
+          "SHA256: $hash"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Lossless-zh
+          path: manager/build/Release/Lossless.dll
+          retention-days: 30
