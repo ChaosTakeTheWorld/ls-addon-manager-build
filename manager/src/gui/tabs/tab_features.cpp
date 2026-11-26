@@ -57,7 +57,7 @@ void Card(int index) {
     ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + textWidth);
     ImGui::TextDisabled("%s", info.summary);
     ImGui::PopTextWrapPos();
-    if (features::NeedsRestart(index)) Chip("RESTART LOSSLESS SCALING TO APPLY");
+    if (features::NeedsRestart(index)) Chip("重启 LOSSLESS SCALING 方可生效");
     const std::string status = features::Status(index);
     if (!status.empty()) {
         ImGui::PushStyleColor(ImGuiCol_Text, V(kAccent));
@@ -90,7 +90,7 @@ void Card(int index) {
 void RenderTabFeatures() {
     ImGui::Dummy(ImVec2(0, S(5)));
     ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextDisabled("Built into the manager. Switch on what you need; each one shows its few options once it is on.");
+    ImGui::TextDisabled("内置于管理器。按需开启；每个功能开启后都会显示其少量选项。");
     ImGui::PopTextWrapPos();
     ImGui::Dummy(ImVec2(0, S(6)));
 

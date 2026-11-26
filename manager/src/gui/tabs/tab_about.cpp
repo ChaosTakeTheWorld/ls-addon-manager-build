@@ -40,25 +40,25 @@ void RenderTabAbout() {
     // title block
     CenteredText(EAM_PRODUCT_NAME);
     ImGui::Dummy(ImVec2(0, S(6)));
-    CenteredText("Lossless Scaling, extended: neural rendering, DLSS and FSR upscaling, and anything else an addon adds.", true);
+    CenteredText("Lossless Scaling 扩展版：神经渲染、DLSS 与 FSR 超分，以及插件带来的一切。", true);
 
     // what comes with it: the three plugins and what is built into the manager
     ImGui::Dummy(ImVec2(0, S(18)));
-    eam::ui::SectionLabel("What comes with it");
+    eam::ui::SectionLabel("包含内容");
     {
         struct Item { const char* icon; const char* name; const char* what; };
         const Item items[] = {
-            { eam::ui::icons::kSliders, "DLSS Neural Rendering",
-              "NVIDIA optical flow and neural rendering on original real captures before LSFG. WGC and a user-provided model are required." },
-            { eam::ui::icons::kUpscale, "DLSS Upscaler",
-              "NVIDIA DLSS in place of Lossless Scaling's NIS scaler: real upscaling (or DLAA at the screen's own size) for games that never had "
-              "it, with motion measured from the frames. NVIDIA RTX." },
-            { eam::ui::icons::kUpscaleFast, "FSR Upscaler",
-              "AMD FSR (3.1, or FSR 4) in the same place, on any DirectX 12 graphics card. Both upscalers take 4:3 games too, keep their settings per game, and "
-              "have Stability and Edge smoothing for older games without anti-aliasing." },
-            { eam::ui::icons::kSliders, "Built into the manager",
-              "ReShade input passthrough, windowed games and a second monitor, a Performance tab that says what limits the frame rate, a tray "
-              "icon and hotkey, and a local installer for installation, repair and removal." },
+            { eam::ui::icons::kSliders, "DLSS 神经渲染",
+              "在 LSFG 之前，对原始真实捕获画面使用 NVIDIA 光流与神经渲染。需要 WGC 和用户提供的模型。" },
+            { eam::ui::icons::kUpscale, "DLSS 超分器",
+              "用 NVIDIA DLSS 取代 Lossless Scaling 的 NIS 缩放器：为原本不支持的游戏提供真正的超分（或按屏幕原生尺寸使用 DLAA），"
+              "并根据画面帧测量运动。需要 NVIDIA RTX。" },
+            { eam::ui::icons::kUpscaleFast, "FSR 超分器",
+              "在同一位置支持 AMD FSR（3.1 或 FSR 4），适用于任何 DirectX 12 显卡。两种超分器同样支持 4:3 游戏，按游戏分别保存设置，"
+              "并为没有抗锯齿的老游戏提供“稳定性”和“边缘平滑”选项。" },
+            { eam::ui::icons::kSliders, "管理器内置功能",
+              "ReShade 输入透传、窗口化游戏与第二显示器、指出帧率瓶颈的“性能”选项卡、托盘图标与快捷键，"
+              "以及用于安装、修复和卸载的本地安装程序。" },
         };
         ImDrawList* dl = ImGui::GetWindowDrawList();
         const float icon = S(30.0f);
@@ -82,40 +82,40 @@ void RenderTabAbout() {
     }
 
     ImGui::Dummy(ImVec2(0, S(14)));
-    eam::ui::SectionLabel("Good to know");
-    ImGui::TextWrapped("Closed this window? It is still running in the notification area (tray). Click the icon, or use the hotkey set in "
-                       "Settings, to open it again.");
+    eam::ui::SectionLabel("使用须知");
+    ImGui::TextWrapped("关闭了此窗口？它仍在通知区域（托盘）中运行。点击图标，或使用在“设置”中设定的快捷键，"
+                       "即可再次打开。");
     ImGui::Dummy(ImVec2(0, S(4)));
-    ImGui::TextWrapped("Hold Ctrl and scroll over any slider to fine-tune it; double-click a slider to put it back to its default.");
+    ImGui::TextWrapped("按住 Ctrl 并在任意滑块上滚动可微调数值；双击滑块可将其恢复为默认值。");
 
     ImGui::Dummy(ImVec2(0, S(14)));
-    eam::ui::SectionLabel("Thanks");
-    ImGui::TextWrapped("This began as LosslessProxy by FrankBarretta (MIT), and we are grateful for it: the idea of a proxy Lossless.dll with "
-                       "addons, the addon interface (which is why LosslessProxy's addons still load here), and the ReShade and Windowed features, "
-                       "which began as addons of theirs and are built in now. The code has since been rewritten.");
+    eam::ui::SectionLabel("致谢");
+    ImGui::TextWrapped("本项目最初是 FrankBarretta 的 LosslessProxy（MIT），我们深表感谢：带插件的代理 Lossless.dll 这一构想、"
+                       "插件接口（这也是 LosslessProxy 的插件仍能在此加载的原因），以及 ReShade 和窗口化功能——"
+                       "它们最初是对方的插件，如今已内置。此后代码已被重写。");
     ImGui::Dummy(ImVec2(0, S(4)));
-    if (eam::ui::Button("The original project", eam::ui::icons::kExternal, eam::ui::ButtonKind::Flat)) OpenUrl("https://github.com/FrankBarretta/LosslessProxy");
+    if (eam::ui::Button("原始项目", eam::ui::icons::kExternal, eam::ui::ButtonKind::Flat)) OpenUrl("https://github.com/FrankBarretta/LosslessProxy");
     ImGui::Dummy(ImVec2(0, S(10)));
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-    ImGui::TextWrapped("NVIDIA DLSS: the standalone DLSS Upscaler includes NVIDIA's NGX SDK and DLSS runtime under "
-                       "NVIDIA's RTX SDKs licence (NVIDIA-LICENSE.txt in its folder). NVIDIA, the NVIDIA logo and DLSS are trademarks of NVIDIA "
-                       "Corporation. This project is not affiliated with or endorsed by NVIDIA.");
+    ImGui::TextWrapped("NVIDIA DLSS：独立的 DLSS 超分器包含 NVIDIA 的 NGX SDK 和 DLSS 运行时，遵循 "
+                       "NVIDIA RTX SDK 许可协议（其文件夹中的 NVIDIA-LICENSE.txt）。NVIDIA、NVIDIA 标志和 DLSS 是 NVIDIA "
+                       "Corporation 的商标。本项目与 NVIDIA 无关联，也未获其背书。");
     ImGui::PopStyleColor();
     ImGui::Dummy(ImVec2(0, S(4)));
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyle().Colors[ImGuiCol_TextDisabled]);
-    ImGui::TextWrapped("AMD FidelityFX: the FSR Upscaler includes AMD's FidelityFX runtime (MIT, AMD-FidelityFX-LICENSE.txt in its folder). AMD, "
-                       "FidelityFX and FSR are trademarks of Advanced Micro Devices, Inc.; this project is not affiliated with or endorsed by AMD.");
+    ImGui::TextWrapped("AMD FidelityFX：FSR 超分器包含 AMD 的 FidelityFX 运行时（MIT，其文件夹中的 AMD-FidelityFX-LICENSE.txt）。AMD、"
+                       "FidelityFX 和 FSR 是 Advanced Micro Devices, Inc. 的商标；本项目与 AMD 无关联，也未获其背书。");
     ImGui::PopStyleColor();
     ImGui::Dummy(ImVec2(0, S(4)));
-    ImGui::TextWrapped("Neural Rendering: GPL-3.0-only. Corresponding source, licences and third-party attribution are included in its folder. The NVIDIA model is user-provided.");
-    ImGui::TextDisabled("Also: Dear ImGui and nlohmann/json (MIT), stb_image (public domain), MinHook (BSD, used by Windowed mode).");
-    ImGui::TextDisabled("Icon shapes are drawn in the manner of the Lucide set (ISC).");
-    ImGui::TextDisabled("Lossless Scaling belongs to its author; this is an unofficial add-on for it.");
+    ImGui::TextWrapped("神经渲染：GPL-3.0-only。相应的源代码、许可协议和第三方归属声明均包含在其文件夹中。NVIDIA 模型由用户提供。");
+    ImGui::TextDisabled("此外：Dear ImGui 和 nlohmann/json（MIT）、stb_image（公有领域）、MinHook（BSD，用于窗口化模式）。");
+    ImGui::TextDisabled("图标形状参照 Lucide 图标集（ISC）绘制。");
+    ImGui::TextDisabled("Lossless Scaling 归其作者所有；这是一款非官方的附加组件。");
 
     ImGui::Dummy(ImVec2(0, S(14)));
-    eam::ui::SectionLabel("For addon authors");
-    ImGui::TextDisabled("Include the SDK headers (addon_sdk.h). widgets.h gives an addon this same look: the palette,");
-    ImGui::TextDisabled("sliders with defaults, section headers, buttons and SVG icons.");
+    eam::ui::SectionLabel("面向插件开发者");
+    ImGui::TextDisabled("包含 SDK 头文件（addon_sdk.h）。widgets.h 让插件拥有相同外观：调色板、");
+    ImGui::TextDisabled("带默认值的滑块、分节标题、按钮和 SVG 图标。");
 }
 
 } // namespace eam

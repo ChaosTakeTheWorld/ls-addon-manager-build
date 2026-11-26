@@ -30,9 +30,9 @@ struct Chip { const char* text = nullptr; ImU32 colour = 0; };
 
 Chip ChipFor(const AddonInfo& a) {
     using namespace eam::ui::theme;
-    if (a.manifest.wip) return { "WIP", U(kWarn) };
-    if (a.faulted) return { "ERROR", kChipRed };
-    if (a.enabled && !a.IsLoaded()) return { a.RequiresRestart() ? "RESTART TO APPLY" : "NOT LOADED", U(kWarn) };
+    if (a.manifest.wip) return { "开发中", U(kWarn) };
+    if (a.faulted) return { "错误", kChipRed };
+    if (a.enabled && !a.IsLoaded()) return { a.RequiresRestart() ? "重启后生效" : "未加载", U(kWarn) };
     return {};
 }
 
@@ -81,11 +81,11 @@ namespace {
 
 std::string SwitchTooltip(const AddonInfo& a) {
     std::string tip = a.GetDisplayName() + "\n\n";
-    tip += a.manifest.description.empty() ? std::string("No description.") : a.manifest.description;
+    tip += a.manifest.description.empty() ? std::string("无描述。") : a.manifest.description;
     tip += "\n\n";
-    if (a.manifest.wip) tip += "Work in progress: it cannot be switched on yet.";
-    else tip += a.enabled ? "On: switch it off to stop using this addon." : "Off: switch it on to use this addon.";
-    if (a.RequiresRestart()) tip += "\nChanging this takes effect the next time Lossless Scaling starts.";
+    if (a.manifest.wip) tip += "开发中：目前无法启用。";
+    else tip += a.enabled ? "已启用：关闭开关即可停止使用此插件。" : "已禁用：打开开关即可使用此插件。";
+    if (a.RequiresRestart()) tip += "\n更改将在下次启动 Lossless Scaling 时生效。";
     return tip;
 }
 

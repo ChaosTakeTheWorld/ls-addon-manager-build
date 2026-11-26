@@ -16,22 +16,22 @@ enum Which { kReShade = 0, kWindowed = 1, kScaling = 2, kCount = 3 };
 
 const Info kInfo[kCount] = {
     { reshade::kId,
-      "ReShade input passthrough",
-      "Use the mouse and keyboard on a ReShade overlay while Lossless Scaling is scaling the game.",
-      "Lossless Scaling's window normally swallows the mouse and keyboard, so a ReShade menu cannot be clicked or typed into. With this on, "
-      "the hotkey below turns passthrough on and off: while it is on, your input goes to the ReShade overlay. It turns itself off when the "
-      "game or Lossless Scaling loses focus.\nIt can be switched on and off at any time." },
+      "ReShade 输入穿透",
+      "在 Lossless Scaling 缩放游戏时，仍然可以在 ReShade 悬浮窗上使用鼠标和键盘。",
+      "Lossless Scaling 的窗口通常会吞掉鼠标和键盘输入，导致 ReShade 菜单无法点击或输入。开启此功能后，"
+      "可用下方快捷键切换穿透状态：开启时输入会传递给 ReShade 悬浮窗。当游戏或 Lossless Scaling 失去焦点时会自动关闭。\n"
+      "此功能可随时开关。" },
     { windowed::kId,
-      "Windowed mode and second monitor",
-      "Let Lossless Scaling work with a windowed game, or with a second monitor.",
-      "Adds a virtual display the size of your game window, so Lossless Scaling can scale a window instead of needing full screen. It can also "
-      "cover just one half of that window (split screen) or sit beside it (for a second monitor).\nIt has to be in place before Lossless "
-      "Scaling starts, so switching it on needs Lossless Scaling to be restarted. Switching it off takes effect at once." },
+      "窗口模式与第二显示器",
+      "让 Lossless Scaling 可以处理窗口化游戏，或配合第二显示器使用。",
+      "添加一个与游戏窗口等大的虚拟显示器，这样 Lossless Scaling 就能缩放窗口而无需全屏。它也可以只覆盖窗口的一半（分屏），"
+      "或位于窗口旁边（作为第二显示器）。\n虚拟显示器必须在 Lossless Scaling 启动前就位，因此开启此功能需要重启 "
+      "Lossless Scaling。关闭则立即生效。" },
     { scaling::kId,
-      "Lossless Scaling overrides",
-      "Choose which corner shows Lossless Scaling's FPS counter.",
-      "Moves the existing counter without changing its readings. Enable Draw FPS in Lossless Scaling to show it.\n"
-      "The location can be changed while scaling. Switching this off restores Lossless Scaling's own placement." },
+      "Lossless Scaling 覆盖项",
+      "选择显示 Lossless Scaling 帧率计数的角落。",
+      "移动现有计数器的位置，不改变其读数。需在 Lossless Scaling 中启用 Draw FPS 才会显示。\n"
+      "缩放过程中也可更改位置。关闭此功能会恢复 Lossless Scaling 自身的默认位置。" },
 };
 
 ConfigManager& Cfg() { return ConfigManager::Instance(); }

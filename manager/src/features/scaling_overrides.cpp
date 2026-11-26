@@ -21,7 +21,7 @@ using Microsoft::WRL::ComPtr;
 std::atomic<bool> g_active{ false }, g_ready{ false };
 std::atomic<int> g_corner{ 0 };
 uintptr_t g_moduleBegin = 0, g_moduleEnd = 0;
-const char* const kCorners[] = { "Top left", "Top right", "Bottom left", "Bottom right" };
+const char* const kCorners[] = { "左上角", "右上角", "左下角", "右下角" };
 using DrawTextFn = void(STDMETHODCALLTYPE*)(ID2D1RenderTarget*, const WCHAR*, UINT32,
     IDWriteTextFormat*, const D2D1_RECT_F*, ID2D1Brush*, D2D1_DRAW_TEXT_OPTIONS, DWRITE_MEASURING_MODE);
 DrawTextFn g_drawText = nullptr;
@@ -133,14 +133,14 @@ void SetFpsCorner(FpsCorner corner) {
     ConfigManager::Instance().Save();
 }
 std::string Status() {
-    return g_ready ? std::string("FPS counter: ") + kCorners[g_corner.load()] :
-        "FPS counter override unavailable";
+    return g_ready ? std::string("帧率计数器：") + kCorners[g_corner.load()] :
+        "帧率计数器位置覆盖不可用";
 }
 void RenderOptions() {
     int corner = g_corner.load();
     ImGui::SetNextItemWidth(ImGui::GetFontSize() * 10.0f);
-    if (ImGui::Combo("FPS counter location", &corner, kCorners, 4)) SetFpsCorner(static_cast<FpsCorner>(corner));
-    ImGui::TextWrapped("Enable Draw FPS in Lossless Scaling to show its counter. Position changes apply immediately.");
+    if (ImGui::Combo("帧率计数器位置", &corner, kCorners, 4)) SetFpsCorner(static_cast<FpsCorner>(corner));
+    ImGui::TextWrapped("在 Lossless Scaling 中启用 Draw FPS 才会显示计数器。位置更改立即生效。");
 }
 
 } // namespace eam::features::scaling

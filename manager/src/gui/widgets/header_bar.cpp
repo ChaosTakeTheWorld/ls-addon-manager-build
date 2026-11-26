@@ -58,12 +58,12 @@ void HeaderBar() {
     float x = origin.x + logo + S(12);
     const float titleSize = base * 1.25f * ImGui::GetStyle().FontScaleDpi;
     const float titleY = origin.y + (height - titleSize) * 0.5f - S(2);
-    dl->AddText(title ? title : ImGui::GetFont(), titleSize, ImVec2(x, titleY), U(kText), "Addon Manager");
-    x += (title ? title : ImGui::GetFont())->CalcTextSizeA(titleSize, FLT_MAX, 0.0f, "Addon Manager").x + S(8);
+    dl->AddText(title ? title : ImGui::GetFont(), titleSize, ImVec2(x, titleY), U(kText), "插件管理器");
+    x += (title ? title : ImGui::GetFont())->CalcTextSizeA(titleSize, FLT_MAX, 0.0f, "插件管理器").x + S(8);
     const float smallSize = ImGui::GetFontSize() * 0.92f;
     const float smallY = titleY + titleSize - smallSize - S(1);
-    dl->AddText(ImGui::GetFont(), smallSize, ImVec2(x, smallY), U(kMuted), "for Lossless Scaling");
-    const float leftEnd = x + ImGui::GetFont()->CalcTextSizeA(smallSize, FLT_MAX, 0.0f, "for Lossless Scaling").x;
+    dl->AddText(ImGui::GetFont(), smallSize, ImVec2(x, smallY), U(kMuted), "适用于 Lossless Scaling");
+    const float leftEnd = x + ImGui::GetFont()->CalcTextSizeA(smallSize, FLT_MAX, 0.0f, "适用于 Lossless Scaling").x;
 
     // right: the machine, right to left
     GpuStats::Instance().Wanted();   // keeps the card's sampler running while the window is drawn
@@ -72,13 +72,13 @@ void HeaderBar() {
     std::vector<Reading> readings;
     if (g.ok) {
         char load[16]; snprintf(load, sizeof load, "%u%%", g.utilGpu);
-        readings.push_back({ "GPU", load, LoadColour(g.utilGpu) });
-        if (g.vramTotalMB) readings.push_back({ "VRAM", Gigabytes(g.vramUsedMB, g.vramTotalMB), FullnessColour((double)g.vramUsedMB, (double)g.vramTotalMB) });
+        readings.push_back({ "显卡", load, LoadColour(g.utilGpu) });
+        if (g.vramTotalMB) readings.push_back({ "显存", Gigabytes(g.vramUsedMB, g.vramTotalMB), FullnessColour((double)g.vramUsedMB, (double)g.vramTotalMB) });
     }
     if (s.ok) {
-        readings.push_back({ "RAM", Gigabytes(s.ramUsedMB, s.ramTotalMB), FullnessColour((double)s.ramUsedMB, (double)s.ramTotalMB) });
+        readings.push_back({ "内存", Gigabytes(s.ramUsedMB, s.ramTotalMB), FullnessColour((double)s.ramUsedMB, (double)s.ramTotalMB) });
         char cpu[16]; snprintf(cpu, sizeof cpu, "%.0f%%", s.cpuPercent);
-        readings.push_back({ "CPU", cpu, LoadColour(s.cpuPercent) });
+        readings.push_back({ "处理器", cpu, LoadColour(s.cpuPercent) });
     }
     const float captionSize = ImGui::GetFontSize() * 0.78f, valueSize = ImGui::GetFontSize() * 1.02f;
     const float gap = S(22);
@@ -110,17 +110,19 @@ void HeaderBar() {
         std::string tip;
         char line[160];
         if (g.ok) {
-            snprintf(line, sizeof line, "%s\n%u%% load, %u C, %.0f of %.0f W\n%u MHz core, %u MHz memory\n%s of video memory in use\n\n", g.name.c_str(), g.utilGpu, g.tempC,
+            // TODO(zh): buffer size
+            snprintf(line, sizeof line, "%s\n占用率 %u%%，%u 摄氏度，%.0f / %.0f 瓦\n核心频率 %u MHz，显存频率 %u MHz\n已使用显存 %s\n\n", g.name.c_str(), g.utilGpu, g.tempC,
                      g.powerW, g.powerLimitW, g.clockGraphics, g.clockMem, Gigabytes(g.vramUsedMB, g.vramTotalMB).c_str());
             tip += line;
         } else if (!g.why.empty()) {
-            tip += "Graphics card: " + g.why + "\n\n";
+            tip += "显卡：" + g.why + "\n\n";
         }
         if (s.ok) {
-            snprintf(line, sizeof line, "%s of system memory in use\nProcessor %.0f%% busy (all cores)", Gigabytes(s.ramUsedMB, s.ramTotalMB).c_str(), s.cpuPercent);
+            // TODO(zh): buffer size
+            snprintf(line, sizeof line, "%s 系统内存使用中\n处理器 %.0f%% 占用（所有核心）", Gigabytes(s.ramUsedMB, s.ramTotalMB).c_str(), s.cpuPercent);
             tip += line;
         }
-        tip += "\n\nThe Performance tab has the history and what it means.";
+        tip += "\n\n“性能”选项卡包含历史记录及其含义。";
         Tip(tip.c_str());
     }
 }

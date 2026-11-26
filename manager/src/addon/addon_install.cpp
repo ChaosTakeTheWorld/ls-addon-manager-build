@@ -52,7 +52,7 @@ static std::wstring SafeFolderName(std::wstring name) {
 PlaceResult PlaceAddon(const fs::path& src, const fs::path& addonsDir) {
     PlaceResult r;
     std::error_code ec;
-    if (!fs::exists(src, ec)) { r.message = "That file or folder does not exist."; return r; }
+    if (!fs::exists(src, ec)) { r.message = "该文件或文件夹不存在。"; return r; }
 
     fs::path staging, srcDir;
     std::wstring name;
@@ -62,7 +62,7 @@ PlaceResult PlaceAddon(const fs::path& src, const fs::path& addonsDir) {
 
     if (fs::is_directory(src, ec)) {
         srcDir = FindAddonRoot(src);
-        if (srcDir.empty()) { r.message = "No addon found in that folder: it needs an addon.json or a .dll."; return r; }
+        if (srcDir.empty()) { r.message = "该文件夹中未找到插件：需要 addon.json 或 .dll 文件。"; return r; }
         name = srcDir.filename().wstring();
     } else if (isZip || isDll) {
         staging = addonsDir / (L".install-" + std::to_wstring(GetTickCount64()));
@@ -71,32 +71,32 @@ PlaceResult PlaceAddon(const fs::path& src, const fs::path& addonsDir) {
             const fs::path d = staging / src.stem();
             fs::create_directories(d, ec);
             fs::copy_file(src, d / src.filename(), fs::copy_options::overwrite_existing, ec);
-            if (ec) { r.message = "Could not copy the DLL: " + ec.message(); cleanup(); return r; }
+            if (ec) { r.message = "无法复制 DLL：" + ec.message(); cleanup(); return r; }
             srcDir = d; name = src.stem().wstring();
         } else {
             wchar_t sysDir[MAX_PATH] = {};
             GetSystemDirectoryW(sysDir, MAX_PATH);
             const std::wstring cmd = L"\"" + std::wstring(sysDir) + L"\\tar.exe\" -xf \"" + src.wstring() + L"\" -C \"" + staging.wstring() + L"\"";
-            if (!RunHidden(cmd, 60000)) { r.message = "Could not unpack the zip (Windows' tar.exe failed)."; cleanup(); return r; }
+            if (!RunHidden(cmd, 60000)) { r.message = "无法解压 zip（Windows 的 tar.exe 失败）。"; cleanup(); return r; }
             srcDir = FindAddonRoot(staging);
-            if (srcDir.empty()) { r.message = "No addon found in that zip: it needs an addon.json or a .dll."; cleanup(); return r; }
+            if (srcDir.empty()) { r.message = "该 zip 中未找到插件：需要 addon.json 或 .dll 文件。"; cleanup(); return r; }
             name = (srcDir == staging) ? src.stem().wstring() : srcDir.filename().wstring();
         }
     } else {
-        r.message = "Pick an addon folder, a .zip or a .dll."; return r;
+        r.message = "请选择插件文件夹、.zip 或 .dll 文件。"; return r;
     }
 
     name = SafeFolderName(name);
-    if (name.empty()) { r.message = "Could not work out a folder name for the addon."; cleanup(); return r; }
+    if (name.empty()) { r.message = "无法确定该插件的文件夹名称。"; cleanup(); return r; }
     const fs::path dest = addonsDir / name;
     if (fs::exists(dest, ec)) {
-        r.message = "An addon folder named '" + Utf8(name) + "' is already installed. Remove or rename it first (an addon that is loaded cannot be replaced while Lossless Scaling runs).";
+        r.message = "名为 '" + Utf8(name) + "' 的插件文件夹已存在。请先移除或重命名（Lossless Scaling 运行时无法替换已加载的插件）。";
         cleanup(); return r;
     }
     fs::create_directories(dest, ec);
     fs::copy(srcDir, dest, fs::copy_options::recursive | fs::copy_options::skip_existing, ec);
     cleanup();
-    if (ec) { r.message = "Could not copy the addon: " + ec.message(); return r; }
+    if (ec) { r.message = "无法复制插件：" + ec.message(); return r; }
     r.ok = true; r.dest = dest;
     return r;
 }
@@ -105,9 +105,9 @@ RemoveResult MoveAddonToRemoved(const fs::path& folder, const fs::path& addonsDi
     RemoveResult r;
     std::error_code ec;
     const fs::path f = fs::weakly_canonical(folder, ec), a = fs::weakly_canonical(addonsDir, ec);
-    if (!fs::is_directory(folder, ec)) { r.message = "That addon folder no longer exists."; return r; }
+    if (!fs::is_directory(folder, ec)) { r.message = "该插件文件夹已不存在。"; return r; }
     if (f.parent_path() != a || f.filename().empty() || f.filename().wstring().rfind(L".", 0) == 0) {
-        r.message = "That folder is not an addon folder inside the addons folder."; return r;
+        r.message = "该文件夹不是 addons 目录下的插件文件夹。"; return r;
     }
     SYSTEMTIME t; GetLocalTime(&t);
     wchar_t stamp[32]; swprintf(stamp, 32, L"%04d%02d%02d-%02d%02d%02d", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond);
@@ -117,7 +117,7 @@ RemoveResult MoveAddonToRemoved(const fs::path& folder, const fs::path& addonsDi
     for (int i = 2; fs::exists(dest, ec); ++i) dest = bin / (f.filename().wstring() + L"-" + stamp + L"-" + std::to_wstring(i));
     fs::rename(folder, dest, ec);
     if (ec) {
-        r.message = "Could not move the addon folder (it may still be in use; restart Lossless Scaling and try again): " + ec.message();
+        r.message = "无法移动插件文件夹（可能仍被占用；请重启 Lossless Scaling 后重试）：" + ec.message();
         return r;
     }
     r.ok = true; r.movedTo = dest;

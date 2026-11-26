@@ -29,7 +29,7 @@ void StatusBar(const StatusBarInfo& info) {
     const float line=ImGui::GetTextLineHeightWithSpacing();
     const float contentHeight=ImGui::GetTextLineHeight()+line*(expanded?3:0);
     const float textY=origin.y+(h-contentHeight)*0.5f;
-    const float buttons=ImGui::CalcTextSize("Details   Copy").x+ImGui::GetStyle().FramePadding.x*4+12;
+    const float buttons=ImGui::CalcTextSize("详情   复制").x+ImGui::GetStyle().FramePadding.x*4+12;
     const float room=(w-buttons)>20?w-buttons:20;
     const std::string full=info.reason+"\n"+info.stats+"\n"+info.hardware+(info.details.empty()?"":"\n"+info.details);
     const float reasonHeight = line * (expanded ? 2 : 1);
@@ -68,14 +68,14 @@ void StatusBar(const StatusBarInfo& info) {
         row(info.hardware,textY+line*3);
     }
     ImGui::SetCursorScreenPos(ImVec2(origin.x+w-buttons,textY));
-    if(ImGui::SmallButton("Details"))ImGui::OpenPopup("Status details");
+    if(ImGui::SmallButton("详情"))ImGui::OpenPopup("状态详情");
     ImGui::SameLine();
-    if(ImGui::SmallButton("Copy"))ImGui::SetClipboardText(full.c_str());
-    if(ImGui::BeginPopup("Status details")) {
+    if(ImGui::SmallButton("复制"))ImGui::SetClipboardText(full.c_str());
+    if(ImGui::BeginPopup("状态详情")) {
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX()+ImGui::GetFontSize()*52);
         ImGui::TextUnformatted(full.c_str());
         ImGui::PopTextWrapPos();
-        if(ImGui::Button("Copy diagnostics"))ImGui::SetClipboardText(full.c_str());
+        if(ImGui::Button("复制诊断信息"))ImGui::SetClipboardText(full.c_str());
         ImGui::EndPopup();
     }
     ImGui::SetCursorScreenPos(origin);

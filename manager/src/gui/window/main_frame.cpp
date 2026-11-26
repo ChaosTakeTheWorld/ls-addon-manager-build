@@ -27,7 +27,7 @@ widgets::StatusBarInfo BuildStatusLine(AddonManager* manager) {
     std::string who = live.addon;
     if (manager) for (const auto& addon : manager->GetAddons()) if (addon.id == live.addon) who = addon.GetDisplayName();
     const auto split=live.text.find('\n');
-    info.reason=live.text.empty()?"Ready; start scaling a game":who+": "+live.text.substr(0,split);
+    info.reason=live.text.empty()?"就绪；请开始对游戏进行缩放":who+": "+live.text.substr(0,split);
     info.level=live.level;
     if(split!=std::string::npos) {
         const auto extra=live.text.find('\n',split+1);
@@ -36,7 +36,7 @@ widgets::StatusBarInfo BuildStatusLine(AddonManager* manager) {
     }
     // Loader/API/dependency failures have no running addon to publish a heartbeat.
     if(manager&&info.level<3)for(const auto& addon:manager->GetAddons())if(addon.enabled&&(addon.faulted||!addon.IsLoaded())) {
-        info.reason=addon.GetDisplayName()+": "+(addon.errorMessage.empty()?(addon.RequiresRestart()?"Restart Lossless Scaling to load this addon":"Addon is not loaded; check Logs and repair its installation"):addon.errorMessage);
+        info.reason=addon.GetDisplayName()+": "+(addon.errorMessage.empty()?(addon.RequiresRestart()?"重启 Lossless Scaling 以加载此插件":"插件未加载；请查看日志并修复其安装"):addon.errorMessage);
         info.level=3;break;
     }
     static RealFrameHook::Diagnostics capture;
@@ -48,13 +48,13 @@ widgets::StatusBarInfo BuildStatusLine(AddonManager* manager) {
         hardware=MachineSummary(capture,SystemStats::Instance().Get(),GpuStats::Instance().Get());
     }
     if(live.addon=="DLSSNR02"&&live.text.rfind("Disabled",0)!=0&&info.level<2&&RealFrameHook::Support()==EamFrameSupport::Waiting&&capture.dispatches&&capture.captures==0&&now-capture.settingsAt>=3000) {
-        info.reason="NR: "+CaptureObservation(capture,now)+"; restart scaling with WGC and a supported profile";info.level=2;
+        info.reason="NR: "+CaptureObservation(capture,now)+"；请使用 WGC 和受支持的配置重新开始缩放";info.level=2;
     }
     if(live.addon=="DLSSNR02"&&live.text.rfind("Disabled",0)!=0&&info.level<2&&RealFrameHook::Support()==EamFrameSupport::SettingsChanging&&capture.settingsAt&&now-capture.settingsAt>=3000)
         info.level=2;
     if(live.addon=="DLSSNR02"&&live.text.rfind("Disabled",0)!=0&&RealFrameHook::Support()==EamFrameSupport::UnsupportedTexture&&!capture.captureError.empty())
-        info.reason="NR: "+capture.captureError+". Disable NR; use SDR/scRGB or restart scaling";
-    info.details+=CaptureSummary(capture)+"\n"+CaptureObservation(capture,now)+"\n"+StatusCounts(total,on)+"\nGPU timings are the last completed samples; capture fps is not game/display fps. Zero dimensions/timings mean no completed measurement yet.";
+        info.reason="NR: "+capture.captureError+"。请禁用 NR；使用 SDR/scRGB 或重新开始缩放";
+    info.details+=CaptureSummary(capture)+"\n"+CaptureObservation(capture,now)+"\n"+StatusCounts(total,on)+"\n显卡耗时为最近完成的采样；捕获帧率并非游戏/显示器帧率。尺寸/耗时为零表示尚无完成的测量。";
     info.stats=(info.stats.empty()?"":info.stats+" | ")+CaptureSummary(capture);
     info.hardware=hardware;
     return info;
@@ -63,21 +63,21 @@ widgets::StatusBarInfo BuildStatusLine(AddonManager* manager) {
 void RenderTabs(AddonManager* manager, bool& bringAddonsForward) {
     if (!ImGui::BeginTabBar("##MainTabs", ImGuiTabBarFlags_None)) return;
 
-    if (ImGui::BeginTabItem("Addons", nullptr, bringAddonsForward ? ImGuiTabItemFlags_SetSelected : 0)) {
+    if (ImGui::BeginTabItem("插件", nullptr, bringAddonsForward ? ImGuiTabItemFlags_SetSelected : 0)) {
         bringAddonsForward = false;
         ImGui::Dummy(ImVec2(0, 5));
         RenderTabAddons(manager);
         ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("Features")) { RenderTabFeatures(); ImGui::EndTabItem(); }
-    if (ImGui::BeginTabItem("Performance")) { RenderTabPerformance(); ImGui::EndTabItem(); }
-    if (ImGui::BeginTabItem("Settings")) { RenderTabSettings(manager); ImGui::EndTabItem(); }
-    if (ImGui::BeginTabItem("Logs")) {
+    if (ImGui::BeginTabItem("功能")) { RenderTabFeatures(); ImGui::EndTabItem(); }
+    if (ImGui::BeginTabItem("性能")) { RenderTabPerformance(); ImGui::EndTabItem(); }
+    if (ImGui::BeginTabItem("设置")) { RenderTabSettings(manager); ImGui::EndTabItem(); }
+    if (ImGui::BeginTabItem("日志")) {
         ImGui::Dummy(ImVec2(0, 5));
         RenderTabLogs();
         ImGui::EndTabItem();
     }
-    if (ImGui::BeginTabItem("About")) { RenderTabAbout(); ImGui::EndTabItem(); }
+    if (ImGui::BeginTabItem("关于")) { RenderTabAbout(); ImGui::EndTabItem(); }
     ImGui::EndTabBar();
 }
 

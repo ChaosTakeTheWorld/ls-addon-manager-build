@@ -124,7 +124,7 @@ AddonManager::InstallResult AddonManager::InstallAddon(const std::wstring& sourc
     if (!Inspect(placed.dest, info)) {
         std::error_code ec;
         fs::remove_all(placed.dest, ec);   // the folder PlaceAddon just made, which holds nothing usable
-        result.message = "That addon has no DLL, so there is nothing to load.";
+        result.message = "该插件没有 DLL，无法加载。";
         return result;
     }
 
@@ -135,7 +135,7 @@ AddonManager::InstallResult AddonManager::InstallAddon(const std::wstring& sourc
 
     result.ok = true;
     result.id = info.id;
-    result.message = "Installed '" + info.GetDisplayName() + "' (switched off). Turn it on with its switch.";
+    result.message = "已安装 '" + info.GetDisplayName() + "'（已关闭）。请用开关启用它。";
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_addons.push_back(std::move(info));
@@ -149,7 +149,7 @@ AddonManager::InstallResult AddonManager::InstallAddon(const std::wstring& sourc
 AddonManager::InstallResult AddonManager::RemoveAddon(int index) {
     InstallResult result;
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (!InRange(m_addons, index)) { result.message = "That addon is no longer in the list."; return result; }
+    if (!InRange(m_addons, index)) { result.message = "该插件已不在列表中。"; return result; }
 
     AddonInfo& addon = m_addons[index];
     const std::string name = addon.GetDisplayName();
@@ -157,12 +157,12 @@ AddonManager::InstallResult AddonManager::RemoveAddon(int index) {
 
     if (addon.IsLoaded()) {
         if (addon.RequiresRestart()) {
-            result.message = "'" + name + "' is loaded and needs Lossless Scaling restarted before it can be removed. "
-                             "Switch it off, restart Lossless Scaling, then remove it.";
+            result.message = "'" + name + "' 已加载，需重启 Lossless Scaling 后才能移除。"
+                             "请先关闭它，重启 Lossless Scaling，然后再移除。";
             return result;
         }
         UnloadModule(addon);
-        if (addon.IsLoaded()) { result.message = "Could not unload '" + name + "'; restart Lossless Scaling and try again."; return result; }
+        if (addon.IsLoaded()) { result.message = "无法卸载 '" + name + "'；请重启 Lossless Scaling 后重试。"; return result; }
     }
 
     const RemoveResult moved = MoveAddonToRemoved(fs::path(m_addonsPath) / addon.folderName, fs::path(m_addonsPath));
@@ -177,7 +177,7 @@ AddonManager::InstallResult AddonManager::RemoveAddon(int index) {
 
     result.ok = true;
     result.id = id;
-    result.message = "Removed '" + name + "'. Its folder is in addons/.removed (move it back to restore it); its settings are kept.";
+    result.message = "已移除 '" + name + "'。其文件夹位于 addons/.removed（移回即可恢复）；设置已保留。";
     LOG_INFO("AddonManager", "Removed addon '%s' -> %s", id.c_str(), WideToUtf8(moved.movedTo.wstring()).c_str());
     return result;
 }
@@ -188,8 +188,8 @@ AddonManager::InstallResult AddonManager::RemoveAddon(int index) {
 
 std::string AddonManager::WhyNotLoadable(const AddonInfo& addon) {
     if (!addon.manifest.minHostVersion.empty() && ParseApiVersion(addon.manifest.minHostVersion) > (uint32_t)EAM_API_VERSION_INT) {
-        const std::string why = "Needs a newer " EAM_PRODUCT_NAME " (addon API " + addon.manifest.minHostVersion +
-                                " or newer; this one provides " EAM_API_VERSION_STRING ")";
+        const std::string why = "需要更新版本的 " EAM_PRODUCT_NAME "（插件 API " + addon.manifest.minHostVersion +
+                                " 或更高；当前提供 " EAM_API_VERSION_STRING "）";
         LOG_ERROR("AddonManager", "Not loading '%s': %s", addon.id.c_str(), why.c_str());
         return why;
     }
@@ -218,7 +218,7 @@ void AddonManager::LoadModule(AddonInfo& addon) {
     HMODULE module = LoadLibraryExW(addon.dllPath.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!module) module = LoadLibraryW(addon.dllPath.c_str());
     if (!module) {
-        addon.errorMessage = "LoadLibrary failed (error " + std::to_string(GetLastError()) + ")";
+        addon.errorMessage = "LoadLibrary 失败（错误 " + std::to_string(GetLastError()) + "）";
         LOG_ERROR("AddonManager", "Failed to load '%s': %s", addon.id.c_str(), addon.errorMessage.c_str());
         return;
     }
@@ -241,7 +241,7 @@ bool AddonManager::StartAddon(AddonInfo& addon, ImGuiContext* ctx) {
 
     if (!guarded::Initialize(addon.exports, m_host, ctx, (void*)alloc, (void*)release, userData)) {
         addon.faulted = true;
-        addon.errorMessage = "Crashed during initialization";
+        addon.errorMessage = "初始化时崩溃";
         LOG_ERROR("AddonManager", "Addon '%s' crashed during init!", addon.id.c_str());
         return false;
     }
@@ -369,7 +369,7 @@ void AddonManager::RenderAddonSettings(int index) {
     const bool drawn = guarded::RenderSettings(addon.exports);
     if (!drawn || InvalidParameterCount() != invalidBefore) {
         addon.settingsFaulted = true;
-        addon.errorMessage = drawn ? "Its settings panel hit an invalid parameter and was turned off (see Logs)" : "Its settings panel crashed and was turned off (see Logs)";
+        addon.errorMessage = drawn ? "其设置面板遇到无效参数，已关闭（见日志）" : "其设置面板崩溃，已关闭（见日志）";
         LOG_ERROR("AddonManager", "Settings panel of '%s' %s; not drawing it again this session", addon.id.c_str(), drawn ? "hit an invalid CRT parameter" : "faulted");
     }
 }

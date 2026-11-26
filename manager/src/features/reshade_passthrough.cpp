@@ -221,7 +221,7 @@ void Stop() {
     LOG_INFO("ReShade", "ReShade input passthrough is off");
 }
 
-std::string Status() { return g_passthroughOn ? "Passthrough ON" : std::string(); }
+std::string Status() { return g_passthroughOn ? "穿透已开启" : std::string(); }
 
 void ForcePassthroughForTest(bool on) {
     g_ignoreFocusForTest = on;
@@ -232,15 +232,15 @@ void RenderOptions() {
     bool changed = false;
 
     bool autoClick = g_autoClick;
-    if (ImGui::Checkbox("Auto click and repress", &autoClick)) { g_autoClick = autoClick; changed = true; }
+    if (ImGui::Checkbox("自动点击并再次按键", &autoClick)) { g_autoClick = autoClick; changed = true; }
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("When you turn passthrough on or off, this clicks the mouse once (wherever the pointer is) and, when turning it on,\n"
-                          "presses the hotkey again. ReShade needs that click to take focus, and the second press to open its menu.\n"
-                          "Turn it off if you would rather do that yourself: the click lands on whatever is under the pointer.");
+        ImGui::SetTooltip("开启或关闭穿透时，会在鼠标指针当前位置单击一次；开启时还会再次按下快捷键。\n"
+                          "ReShade 需要这次点击来获得焦点，第二次按键用于打开其菜单。\n"
+                          "如果你更想自己操作，可以关闭此选项：点击会落在指针下方的任意位置。");
 
     bool ctrl = g_hotkeyCtrl, alt = g_hotkeyAlt, shift = g_hotkeyShift;
     ImGui::AlignTextToFramePadding();
-    ImGui::TextDisabled("Hotkey");
+    ImGui::TextDisabled("快捷键");
     ImGui::SameLine();
     if (ImGui::Checkbox("Ctrl", &ctrl)) { g_hotkeyCtrl = ctrl; changed = true; }
     ImGui::SameLine();
@@ -260,7 +260,7 @@ void RenderOptions() {
             if (ImGui::Selectable(KeyName(vk), current == vk)) { g_hotkeyVk = vk; changed = true; }
         ImGui::EndCombo();
     }
-    if (ImGui::IsItemHovered()) ImGui::SetTooltip("The key that turns passthrough on and off, with the modifiers ticked. Press it while the game has the focus.");
+    if (ImGui::IsItemHovered()) ImGui::SetTooltip("切换穿透开关的按键，可与上方勾选的修饰键组合使用。需在游戏获得焦点时按下。");
 
     if (changed) SaveSettings();
 }

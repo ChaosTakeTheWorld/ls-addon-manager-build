@@ -127,9 +127,9 @@ void RenderTabPerformance() {
     ImGui::BeginChild("##perf", ImVec2(0, 0), false);
 
     if (!haveFrames && !haveGpu) {
-        widgets::EmptyState(ImGui::GetContentRegionAvail().x, "No live data yet",
-                            gpu.ok ? "Waiting for the GPU..." : "Start scaling with Neural Rendering or a standalone upscaler. GPU figures need an NVIDIA GPU.");
-        if (!gpu.ok && !gpu.why.empty()) { ImGui::Dummy(ImVec2(0, S(6))); ImGui::TextDisabled("GPU: %s", gpu.why.c_str()); }
+        widgets::EmptyState(ImGui::GetContentRegionAvail().x, "暂无实时数据",
+                            gpu.ok ? "等待显卡..." : "使用神经渲染或独立超分器开始缩放。显卡数据需要 NVIDIA 显卡。");
+        if (!gpu.ok && !gpu.why.empty()) { ImGui::Dummy(ImVec2(0, S(6))); ImGui::TextDisabled("显卡：%s", gpu.why.c_str()); }
         ImGui::EndChild();
         return;
     }
@@ -141,55 +141,55 @@ void RenderTabPerformance() {
     const float gap = ImGui::GetStyle().ItemSpacing.x;
     const float tileW = (ImGui::GetContentRegionAvail().x - gap * 3.0f) / 4.0f;
     char big[64], sub[96];
-    if (haveFrames && fs.avg > 0.1f) snprintf(big, sizeof big, "%.0f fps", 1000.0f / fs.avg); else snprintf(big, sizeof big, "-");
-    snprintf(sub, sizeof sub, haveFrames ? "%.1f ms average" : "no frames", fs.avg);
-    Tile("t1", tileW, "OBSERVED FRAME RATE", big, sub, U(eam::ui::theme::kAccent));
+    if (haveFrames && fs.avg > 0.1f) snprintf(big, sizeof big, "%.0f FPS", 1000.0f / fs.avg); else snprintf(big, sizeof big, "-");
+    snprintf(sub, sizeof sub, haveFrames ? "%.1f ms 平均值" : "无帧", fs.avg);
+    Tile("t1", tileW, "观察到的帧率", big, sub, U(eam::ui::theme::kAccent));
     ImGui::SameLine();
     if (haveFrames) snprintf(big, sizeof big, "%.1f ms", fs.p95); else snprintf(big, sizeof big, "-");
-    snprintf(sub, sizeof sub, haveFrames ? "worst frame %.0f ms" : "", fs.mx);
-    Tile("t2", tileW, "SLOWEST 5% OF FRAMES", big, sub, U(fs.p95 > 25.0f ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
+    snprintf(sub, sizeof sub, haveFrames ? "最慢帧 %.0f ms" : "", fs.mx);
+    Tile("t2", tileW, "最慢的 5% 帧", big, sub, U(fs.p95 > 25.0f ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
     ImGui::SameLine();
     if (!model.samples.empty()) snprintf(big, sizeof big, "%.1f ms", ms.avg); else snprintf(big, sizeof big, "-");
-    snprintf(sub, sizeof sub, "%s", source == std::string("DLSSNR02") ? "every capture waits for NR" : "");
-    Tile("t3", tileW, "MODEL COST", big, sub, U(eam::ui::theme::kAccent));
+    snprintf(sub, sizeof sub, "%s", source == std::string("DLSSNR02") ? "每次捕获都需等待神经渲染" : "");
+    Tile("t3", tileW, "模型耗时", big, sub, U(eam::ui::theme::kAccent));
     ImGui::SameLine();
     if (haveGpu) snprintf(big, sizeof big, "%u%%", gpu.utilGpu); else snprintf(big, sizeof big, "-");
-    snprintf(sub, sizeof sub, haveGpu ? "%.0f of %.0f W" : "", gpu.powerW, gpu.powerLimitW);
-    Tile("t4", tileW, "GPU LOAD", big, sub, U(haveGpu && gpu.utilGpu >= 95 ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
+    snprintf(sub, sizeof sub, haveGpu ? "%.0f / %.0f W" : "", gpu.powerW, gpu.powerLimitW);
+    Tile("t4", tileW, "显卡负载", big, sub, U(haveGpu && gpu.utilGpu >= 95 ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
 
     // ---- frame time graph
     ImGui::Dummy(ImVec2(0, S(6)));
-    eam::ui::SectionLabel("Frame time, last 20 seconds");
+    eam::ui::SectionLabel("帧时间（最近 20 秒）");
     {
         const std::vector<ImVec2> pts = ToPoints(frame, now, kGraphSeconds);
         const float top = (std::max)(40.0f, fs.mx * 1.1f);
         const float guides[2] = { 16.7f, 33.3f };
-        const char* labels[2] = { "60 fps", "30 fps" };
+        const char* labels[2] = { "60 FPS", "30 FPS" };
         if (pts.size() > 1)
             eam::ui::LineGraph("frames", pts.data(), (int)pts.size(), ImVec2(0, ImGui::GetFontSize() * 7.0f), 0.0f, top, U(eam::ui::theme::kAccent), guides, labels, 2, 33.3f, U(eam::ui::theme::kWarn), "ms");
-        else { ImGui::TextDisabled("No frames in the last few seconds."); }
+        else { ImGui::TextDisabled("最近几秒内没有帧数据。"); }
     }
-    widgets::Tip("Time between observed addon frames. Neural Rendering reports real captures; standalone upscalers can also observe generated output. A flat line at 16.7 ms is a steady 60 fps. Spikes above the upper dashed line (33 ms) turn amber.");
+    widgets::Tip("观察到的插件帧之间的时间。神经渲染报告真实捕获；独立超分器也可以观察生成的输出。16.7 ms 的水平线表示稳定的 60 FPS。超过上方虚线（33 ms）的尖峰会变为琥珀色。");
 
     // ---- model and GPU graphs, side by side
     ImGui::Dummy(ImVec2(0, S(6)));
     const float half = (ImGui::GetContentRegionAvail().x - gap) * 0.5f;
     ImGui::BeginGroup();
-    eam::ui::SectionLabel("Model cost (ms)");
+    eam::ui::SectionLabel("模型耗时 (ms)");
     {
         const std::vector<ImVec2> pts = ToPoints(model, now, kGraphSeconds);
         if (pts.size() > 1) eam::ui::LineGraph("model", pts.data(), (int)pts.size(), ImVec2(half, ImGui::GetFontSize() * 5.0f), 0.0f, (std::max)(10.0f, ms.mx * 1.2f), U(eam::ui::theme::kAccent), nullptr, nullptr, 0, 0, 0, "ms");
-        else ImGui::TextDisabled("Not reported yet.");
+        else ImGui::TextDisabled("尚未报告。");
     }
     ImGui::EndGroup();
     ImGui::SameLine();
     ImGui::BeginGroup();
-    eam::ui::SectionLabel("GPU load (%)");
+    eam::ui::SectionLabel("显卡负载 (%)");
     {
         const std::vector<ImVec2> pts = ToPoints(util, now, kGraphSeconds);
         const float guides[1] = { 95.0f };
         if (pts.size() > 1) eam::ui::LineGraph("gpu", pts.data(), (int)pts.size(), ImVec2(half, ImGui::GetFontSize() * 5.0f), 0.0f, 100.0f, U(eam::ui::theme::kAccent), guides, nullptr, 1, 95.0f, U(eam::ui::theme::kWarn), "%");
-        else ImGui::TextDisabled("Waiting for the GPU...");
+        else ImGui::TextDisabled("等待显卡...");
     }
     ImGui::EndGroup();
 
@@ -197,51 +197,51 @@ void RenderTabPerformance() {
     if (haveGpu) {
         ImGui::Dummy(ImVec2(0, S(8)));
         char t[8][96];
-        snprintf(t[7], sizeof t[7], "GPU  %s%s", gpu.name.c_str(), gpu.deviceCount > 1 ? "  (first of several)" : "");
+        snprintf(t[7], sizeof t[7], "显卡  %s%s", gpu.name.c_str(), gpu.deviceCount > 1 ? "  （多个中的第一个）" : "");
         eam::ui::SectionLabel(t[7]);
         const bool atCap = gpu.powerLimitW > 0 && gpu.powerW >= gpu.powerLimitW * 0.96;
         snprintf(t[0], sizeof t[0], "%u%%", gpu.utilGpu);
-        Bar("Load", gpu.utilGpu / 100.0f, t[0], U(gpu.utilGpu >= 95 ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
+        Bar("负载", gpu.utilGpu / 100.0f, t[0], U(gpu.utilGpu >= 95 ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
         snprintf(t[1], sizeof t[1], "%.0f / %.0f W", gpu.powerW, gpu.powerLimitW);
-        Bar("Power", gpu.powerLimitW > 0 ? (float)(gpu.powerW / gpu.powerLimitW) : 0.0f, t[1], U(atCap ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
+        Bar("功耗", gpu.powerLimitW > 0 ? (float)(gpu.powerW / gpu.powerLimitW) : 0.0f, t[1], U(atCap ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
         snprintf(t[2], sizeof t[2], "%llu / %llu MB", (unsigned long long)gpu.vramUsedMB, (unsigned long long)gpu.vramTotalMB);
-        Bar("Memory", gpu.vramTotalMB ? (float)gpu.vramUsedMB / (float)gpu.vramTotalMB : 0.0f, t[2], U(eam::ui::theme::kAccent));
+        Bar("显存", gpu.vramTotalMB ? (float)gpu.vramUsedMB / (float)gpu.vramTotalMB : 0.0f, t[2], U(eam::ui::theme::kAccent));
         snprintf(t[3], sizeof t[3], "%u C", gpu.tempC);
-        Bar("Temperature", gpu.tempC / 100.0f, t[3], U(gpu.tempC >= 85 ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
-        snprintf(t[4], sizeof t[4], "%u MHz core, %u MHz mem", gpu.clockGraphics, gpu.clockMem);
-        ImGui::TextDisabled("Clocks"); ImGui::SameLine(ImGui::GetFontSize() * 6.5f); ImGui::TextUnformatted(t[4]);
+        Bar("温度", gpu.tempC / 100.0f, t[3], U(gpu.tempC >= 85 ? eam::ui::theme::kWarn : eam::ui::theme::kAccent));
+        snprintf(t[4], sizeof t[4], "%u MHz 核心，%u MHz 显存", gpu.clockGraphics, gpu.clockMem);
+        ImGui::TextDisabled("频率"); ImGui::SameLine(ImGui::GetFontSize() * 6.5f); ImGui::TextUnformatted(t[4]);
         const std::string th = GpuStats::ThrottleText(gpu.throttle);
-        ImGui::TextDisabled("Limited by"); ImGui::SameLine(ImGui::GetFontSize() * 6.5f);
-        if (th.empty()) ImGui::TextUnformatted("nothing"); else { ImGui::PushStyleColor(ImGuiCol_Text, V(eam::ui::theme::kWarn)); ImGui::TextUnformatted(th.c_str()); ImGui::PopStyleColor(); }
+        ImGui::TextDisabled("受限于"); ImGui::SameLine(ImGui::GetFontSize() * 6.5f);
+        if (th.empty()) ImGui::TextUnformatted("无"); else { ImGui::PushStyleColor(ImGuiCol_Text, V(eam::ui::theme::kWarn)); ImGui::TextUnformatted(th.c_str()); ImGui::PopStyleColor(); }
     }
 
     // ---- what it says
     ImGui::Dummy(ImVec2(0, S(8)));
-    eam::ui::SectionLabel("What this says");
+    eam::ui::SectionLabel("说明");
     bool said = false;
     if (haveGpu && gpu.powerLimitW > 0 && gpu.powerW >= gpu.powerLimitW * 0.96 && gpu.utilGpu >= 90) {
-        char b[220]; snprintf(b, sizeof b, "The GPU is at its power limit (%.0f W) and fully loaded, so it cannot go faster. Lowering the game's render scale or the Model resolution frees headroom.", gpu.powerLimitW);
+        char b[220]; snprintf(b, sizeof b, "显卡已达到功耗上限（%.0f W）且已满载，无法再提升性能。降低游戏的渲染缩放比例或模型分辨率可释放余量。", gpu.powerLimitW);
         Reading(U(eam::ui::theme::kWarn), b); said = true;
     } else if (haveGpu && (gpu.throttle & 0x60) && gpu.utilGpu >= 80) {
-        Reading(U(eam::ui::theme::kWarn), "The GPU is slowing down because of temperature. Check the case airflow and the fan curve."); said = true;
+        Reading(U(eam::ui::theme::kWarn), "显卡因温度过高而降频。请检查机箱风道和风扇曲线。"); said = true;
     }
     if (haveFrames && fs.n > 30) {
         if (fs.p95 > 1.5f * fs.p50 && fs.p95 > 22.0f) {
-            char b[200]; snprintf(b, sizeof b, "Frame pacing is uneven: half the frames take %.1f ms but the slowest 5%% take %.1f ms or more. That shows as stutter.", fs.p50, fs.p95);
+            char b[200]; snprintf(b, sizeof b, "帧间隔不均匀：一半的帧耗时 %.1f ms，但最慢的 5%% 耗时 %.1f ms 或更多。这表现为卡顿。", fs.p50, fs.p95);
             Reading(U(eam::ui::theme::kWarn), b);
         } else {
-            char b[200]; snprintf(b, sizeof b, "Frame times are steady: half take %.1f ms and 95%% take %.1f ms or less.", fs.p50, fs.p95);
+            char b[200]; snprintf(b, sizeof b, "帧时间稳定：一半的帧耗时 %.1f ms，95%% 的帧耗时 %.1f ms 或更少。", fs.p50, fs.p95);
             Reading(U(eam::ui::theme::kAccent), b);
         }
         said = true;
     }
-    if (!said) ImGui::TextDisabled("Nothing to report yet.");
+    if (!said) ImGui::TextDisabled("暂无可报告的内容。");
 
     // ---- every live value
     ImGui::Dummy(ImVec2(0, S(8)));
-    if (eam::ui::SectionHeader("All live values")) {
+    if (eam::ui::SectionHeader("所有实时数值")) {
         if (ImGui::BeginTable("##allmetrics", 6, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp)) {
-            ImGui::TableSetupColumn("Source"); ImGui::TableSetupColumn("Value"); ImGui::TableSetupColumn("Now"); ImGui::TableSetupColumn("Average"); ImGui::TableSetupColumn("Min"); ImGui::TableSetupColumn("Max");
+            ImGui::TableSetupColumn("来源"); ImGui::TableSetupColumn("数值"); ImGui::TableSetupColumn("当前"); ImGui::TableSetupColumn("平均"); ImGui::TableSetupColumn("最小"); ImGui::TableSetupColumn("最大");
             ImGui::TableHeadersRow();
             for (const auto& s : M.Snapshot(kStatSeconds)) {
                 if (s.samples.empty()) continue;

@@ -29,35 +29,35 @@ void InitializeUpdateCheck(updates::Checker& checker) {
 
 void RenderUpdateConsent(updates::Checker& checker) {
     if (checker.GetPolicy() != updates::Policy::Ask || ConfigManager::Instance().RestartPending()) return;
-    constexpr const char* title = "Automatic update checks";
+    constexpr const char* title = "自动更新检查";
     if (!ImGui::IsPopupOpen(title)) ImGui::OpenPopup(title);
     const ImVec2 display = ImGui::GetIO().DisplaySize;
     ImGui::SetNextWindowPos(ImVec2(display.x * 0.5f, display.y * 0.5f), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     if (ImGui::BeginPopupModal(title, nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + S(420));
-        ImGui::TextWrapped("Automatically check GitHub for updates?");
+        ImGui::TextWrapped("是否自动检查 GitHub 更新？");
         ImGui::Dummy(ImVec2(0, S(4)));
-        ImGui::TextWrapped("If not, the app is completely offline.");
-        ImGui::TextWrapped("You can change this later in Settings.");
+        ImGui::TextWrapped("如果不启用，应用将完全离线运行。");
+        ImGui::TextWrapped("你可以稍后在设置中更改此选项。");
         ImGui::PopTextWrapPos();
         ImGui::Dummy(ImVec2(0, S(8)));
-        if (ImGui::Button("Yes, enable")) { SavePolicy(checker, true); ImGui::CloseCurrentPopup(); }
+        if (ImGui::Button("是，启用")) { SavePolicy(checker, true); ImGui::CloseCurrentPopup(); }
         ImGui::SameLine();
-        if (ImGui::Button("No, stay offline")) { SavePolicy(checker, false); ImGui::CloseCurrentPopup(); }
+        if (ImGui::Button("否，保持离线")) { SavePolicy(checker, false); ImGui::CloseCurrentPopup(); }
         ImGui::SetItemDefaultFocus();
         ImGui::EndPopup();
     }
 }
 
 void RenderUpdateSettings(updates::Checker& checker) {
-    eam::ui::SectionLabel("Updates");
+    eam::ui::SectionLabel("更新");
     bool enabled = checker.GetPolicy() == updates::Policy::Enabled;
     ImGui::BeginDisabled(ConfigManager::Instance().RestartPending());
-    if (ImGui::Checkbox("Automatically check GitHub for updates", &enabled)) SavePolicy(checker, enabled);
+    if (ImGui::Checkbox("自动检查 GitHub 更新", &enabled)) SavePolicy(checker, enabled);
     ImGui::EndDisabled();
-    ImGui::TextDisabled("Checks at startup. Download opens the release page in your browser.");
-    if (checker.Get().status == updates::Status::Checking) ImGui::TextDisabled("Checking for updates...");
-    else if (checker.Get().status == updates::Status::Failed) ImGui::TextDisabled("Could not check for updates. Will try again next startup.");
+    ImGui::TextDisabled("启动时检查。点击下载将在浏览器中打开发布页面。");
+    if (checker.Get().status == updates::Status::Checking) ImGui::TextDisabled("正在检查更新...");
+    else if (checker.Get().status == updates::Status::Failed) ImGui::TextDisabled("无法检查更新。下次启动时将重试。");
 }
 
 float UpdateBannerHeight(const updates::Result& result) {
@@ -77,10 +77,10 @@ void RenderUpdateBanner(const updates::Result& result) {
     ImGui::SetCursorScreenPos(ImVec2(origin.x + inset, origin.y + S(6)));
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(updates::BannerText(result).c_str());
-    const float buttonWidth = ImGui::CalcTextSize("Download").x + ImGui::GetStyle().FramePadding.x * 2;
+    const float buttonWidth = ImGui::CalcTextSize("下载").x + ImGui::GetStyle().FramePadding.x * 2;
     ImGui::SameLine();
     ImGui::SetCursorScreenPos(ImVec2(origin.x + width - buttonWidth - inset, origin.y + S(6)));
-    if (ImGui::Button("Download")) ShellExecuteW(nullptr, L"open", updates::kReleasesUrl, nullptr, nullptr, SW_SHOWNORMAL);
+    if (ImGui::Button("下载")) ShellExecuteW(nullptr, L"open", updates::kReleasesUrl, nullptr, nullptr, SW_SHOWNORMAL);
     ImGui::SetCursorScreenPos(origin);
     ImGui::Dummy(ImVec2(width, drawnBannerHeight));
 }

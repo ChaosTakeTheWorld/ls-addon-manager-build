@@ -39,7 +39,7 @@ Result ParseRelease(const std::string& text, unsigned currentBuild) {
 
 std::string BannerText(const Result& result) {
     if (result.status != Status::Available) return {};
-    return "Update available" + (result.build ? " (Build " + std::to_string(*result.build) + ")" : std::string());
+    return "有可用更新" + (result.build ? "（构建 " + std::to_string(*result.build) + "）" : std::string());
 }
 
 struct Checker::Job {
