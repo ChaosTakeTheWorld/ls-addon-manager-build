@@ -145,9 +145,9 @@ void Status() {
     const char *support = Support(state);
     const bool blockedProfile = support && state != EamFrameSupport::Waiting && state != EamFrameSupport::SettingsChanging;
     const std::string failure = snapshot.status.substr(0, snapshot.status.find("; processing paused."));
-    std::string message = !snapshot.enabled ? "Disabled; original frames allowed"
+    std::string message = !snapshot.enabled ? "已禁用；允许原始画面"
                           : blockedProfile ? support
-                          : snapshot.failed ? "Capture paused: " + failure + ". " + neural::FailureGuidance(snapshot.status) + ". Disable NR to continue"
+                          : snapshot.failed ? "捕获已暂停：" + failure + ". " + neural::FailureGuidance(snapshot.status) + ". 禁用 NR 以继续"
                           : support ? support : snapshot.status;
     int level = !snapshot.enabled ? 0 : blockedProfile ? 2 : snapshot.failed ? 3 : support ? 0 : snapshot.ready ? 1 : 0;
     const auto captureAt = lastCaptureAt.load();
@@ -155,11 +155,11 @@ void Status() {
     if (snapshot.enabled && !snapshot.failed && !support) {
         if (snapshot.stage != neural::Stage::Idle && (!snapshot.ready || snapshot.stageSeconds >= 3)) {
             char age[32];snprintf(age,sizeof age," (%.1f s)",snapshot.stageSeconds);
-            message = std::string("Capture waiting: ") + neural::StageName(snapshot.stage) + age;
-            if (snapshot.stageSeconds >= 3) { message += "; if it stays here, disable NR or restart LS"; level=2; }
+            message = std::string("捕获等待中：") + neural::StageName(snapshot.stage) + age;
+            if (snapshot.stageSeconds >= 3) { message += "；如果一直停留在此，请禁用 NR 或重启 LS"; level=2; }
         } else if (snapshot.ready && quiet >= 3) {
             char age[32];snprintf(age,sizeof age,"%.0f s",quiet);
-            message = std::string("No new captures for ") + age + "; scaling may be stopped, paused or the source unavailable";
+            message = std::string("无新捕获已持续 ") + age + "；缩放可能已停止、暂停或来源不可用";
             level = 0; // Stopping/minimizing scaling is normal; absence alone is not a failure.
         }
     }
@@ -167,9 +167,10 @@ void Status() {
     const double interval = lastIntervalMs.load();
     const bool liveFrames = snapshot.enabled && snapshot.ready && !snapshot.failed && !support && quiet < 3;
     char stats[512];
-    snprintf(stats,sizeof stats,"Capture %ux%u -> NR %ux%u | %llu processed | %.1f capture fps%s | last NR GPU %.2f ms | callback CPU %.2f ms | slot/summary wait %.2f/%.2f ms | %u pass(es) | %llu cuts/%llu resets",
+    // TODO(zh): buffer size
+    snprintf(stats,sizeof stats,"捕获 %ux%u -> NR %ux%u | %llu 已处理 | %.1f 捕获 fps%s | 最近 NR GPU %.2f ms | 回调 CPU %.2f ms | 槽/摘要等待 %.2f/%.2f ms | %u 次处理 | %llu 剪切/%llu 重置",
         m.width,m.height,m.workingWidth,m.workingHeight,m.accepted,liveFrames&&interval>0?1000/interval:0,
-        liveFrames?"":" (waiting/off)",m.prepareMs+m.flowMs+m.modelMs+m.compositionMs,lastCallbackMs.load(),m.slotWaitMs,m.summaryWaitMs,m.passes,m.cuts,m.resets);
+        liveFrames?"":" (等待中/关闭)",m.prepareMs+m.flowMs+m.modelMs+m.compositionMs,lastCallbackMs.load(),m.slotWaitMs,m.summaryWaitMs,m.passes,m.cuts,m.resets);
     // Log transitions, including failures before the first callback returns.
     static std::string previous;
     std::string transition = !snapshot.enabled ? "Disabled" : blockedProfile ? support : snapshot.failed ? snapshot.status : support ? support : snapshot.status;
@@ -179,7 +180,7 @@ void Status() {
     }
     if (transition != previous) { host->Log(level>=2?EAM_LOG_WARN:EAM_LOG_INFO, message.c_str()); previous=transition; }
     message += "\n";message += stats;
-    if (blockedProfile && snapshot.failed) message += "\nPrevious pipeline error: " + snapshot.status;
+    if (blockedProfile && snapshot.failed) message += "\n上一个管线错误：" + snapshot.status;
     host->SetStatus(Id, message.c_str(), level);
     host->PublishMetric(Id, "prepare_ms", m.prepareMs, "ms");
     host->PublishMetric(Id, "flow_ms", m.flowMs, "ms");
@@ -226,7 +227,7 @@ EAM_EXPORT void AddonInitialize(IHost *supplied, ImGuiContext *context, void *al
     startupError.clear();
     lastCaptureAt=0;lastIntervalMs=0;lastCallbackMs=0;
     if (host->GetHostVersion() < 0x010400) {
-        startupError="Manager API 1.4 or newer is required; install the matching manager and NR addon";
+        startupError="需要 Manager API 1.4 或更高版本；请安装匹配的管理器和 NR 插件";
         reporter.Start(Status);
         return;
     }
@@ -278,13 +279,13 @@ EAM_EXPORT void AddonInitialize(IHost *supplied, ImGuiContext *context, void *al
     service = std::make_unique<neural::Service>();
     if (!host->SetRealFrameCallback(Frame)) {
         service.reset();
-        startupError="Another addon owns real-frame processing; disable the conflicting addon and reload NR";
+        startupError="另一个插件占用了真实帧处理；请禁用冲突的插件并重新加载 NR";
         reporter.Start(Status);
-        host->Log(EAM_LOG_ERROR, "NR could not acquire the real-frame stage");
+        host->Log(EAM_LOG_ERROR, "NR 无法获取真实帧阶段");
         return;
     }
     Configure(true);
-    host->Log(EAM_LOG_INFO, "DLSS NR started: original capture -> NVIDIA flow -> NR -> composition -> LSFG");
+    host->Log(EAM_LOG_INFO, "DLSS NR 已启动：原始捕获 -> NVIDIA 光流 -> NR -> 合成 -> LSFG");
     reporter.Start(Status);
 }
 EAM_EXPORT void AddonShutdown() {
@@ -304,7 +305,7 @@ EAM_EXPORT uint32_t GetAddonCapabilities() {
     return EAM_CAP_HAS_SETTINGS | EAM_CAP_D3D11_DEVICE_ACCESS | EAM_CAP_DISPATCH_HOOK;
 }
 EAM_EXPORT const char *GetAddonName() {
-    return "DLSS Neural Rendering";
+    return "DLSS 神经渲染";
 }
 EAM_EXPORT const char *GetAddonVersion() {
     return "1.2.2";
@@ -313,34 +314,34 @@ EAM_EXPORT const char *GetAddonAuthor() {
     return "FriedSnowman";
 }
 EAM_EXPORT const char *GetAddonDescription() {
-    return "NVIDIA neural rendering on original captures before LSFG, with independent NVIDIA optical flow.";
+    return "在 LSFG 之前对原始捕获画面进行 NVIDIA 神经渲染，并采用独立的 NVIDIA 光流。";
 }
 EAM_EXPORT void AddonRenderSettings() {
     if (!host || !service)
         return;
     bool changed = false, rebuild = false;
-    if (ImGui::Checkbox("Neural rendering", &enabled)) {
+    if (ImGui::Checkbox("神经渲染", &enabled)) {
         changed = true;
         rebuild = true;
     }
-    ImGui::TextWrapped("Processes real captures before LSFG. Requires NVIDIA, WGC, and a user-provided "
-                       "model. Every capture waits for processing; GPU load can reduce the frame rate. "
-                       "Captures contain no game depth or motion data.");
-    eam::ui::SectionLabel("Model file");
+    ImGui::TextWrapped("在 LSFG 之前处理真实捕获画面。需要 NVIDIA、WGC 和用户提供的模型。"
+                       "每次捕获都会等待处理；GPU 负载可能会降低帧率。"
+                       "捕获画面不包含游戏深度或运动数据。");
+    eam::ui::SectionLabel("模型文件");
     ImGui::SetNextItemWidth(-90);
     if (ImGui::InputText("##model", modelPath, sizeof(modelPath), ImGuiInputTextFlags_EnterReturnsTrue)) {
         changed = true;
         rebuild = true;
     }
     ImGui::SameLine();
-    if (ImGui::Button("Browse")) {
+    if (ImGui::Button("浏览")) {
         wchar_t chosen[32768]{};
         auto current = Wide(modelPath);
         wcsncpy_s(chosen, current.c_str(), _TRUNCATE);
         OPENFILENAMEW dialog{sizeof(dialog)};
         dialog.lpstrFile = chosen;
         dialog.nMaxFile = 32768;
-        dialog.lpstrFilter = L"NVIDIA NR runtime\0nvngx_dlssnr.dll\0DLL files\0*.dll\0";
+        dialog.lpstrFilter = L"NVIDIA NR 运行库\0nvngx_dlssnr.dll\0DLL 文件\0*.dll\0";
         dialog.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
         if (GetOpenFileNameW(&dialog)) {
             snprintf(modelPath, sizeof(modelPath), "%s", Utf8(chosen).c_str());
@@ -348,26 +349,26 @@ EAM_EXPORT void AddonRenderSettings() {
             rebuild = true;
         }
     }
-    ImGui::TextDisabled("The model DLL is not included.");
-    eam::ui::SectionLabel("Quality and performance");
+    ImGui::TextDisabled("模型 DLL 未包含在内。");
+    eam::ui::SectionLabel("质量与性能");
     int scale = int(settings.scalePercent);
-    if (ImGui::SliderInt("Working resolution", &scale, 25, 100, "%d%%", ImGuiSliderFlags_AlwaysClamp)) {
+    if (ImGui::SliderInt("工作分辨率", &scale, 25, 100, "%d%%", ImGuiSliderFlags_AlwaysClamp)) {
         settings.scalePercent = unsigned(scale);
         rebuild = true;
     }
-    ImGui::TextDisabled("Percentage per axis; no hidden resolution cap.");
+    ImGui::TextDisabled("每个轴的百分比；没有隐藏的分辨率上限。");
     int grid = settings.flowGrid == 1 ? 0 : settings.flowGrid == 2 ? 1 : 2;
-    if (ImGui::Combo("Flow grid", &grid, "1 pixel\0 2 pixels\0 4 pixels (default)\0")) {
+    if (ImGui::Combo("光流网格", &grid, "1 像素\0 2 像素\0 4 像素（默认）\0")) {
         settings.flowGrid = 1u << grid;
         rebuild = true;
     }
     int quality = int(settings.flowQuality) - 1;
-    if (ImGui::Combo("Flow quality", &quality, "Slow / higher quality\0Medium (default)\0Fast\0")) {
+    if (ImGui::Combo("光流质量", &quality, "慢速 / 更高质量\0中等（默认）\0快速\0")) {
         settings.flowQuality = quality + 1;
         rebuild = true;
     }
-    eam::ui::SectionLabel("Model controls");
-    if (ImGui::Button("Restore defaults")) {
+    eam::ui::SectionLabel("模型控制");
+    if (ImGui::Button("恢复默认")) {
         settings.model = neural::ModelSettings{};
         settings.composition = neural::CompositionSettings{};
         settings.passes = 1;
@@ -375,34 +376,34 @@ EAM_EXPORT void AddonRenderSettings() {
         rebuild = true;
     }
     int preset = int(settings.model.preset);
-    if (ImGui::Combo("Model", &preset, "Default\0Original (A)\0Fast (B)\0Preset 3\0")) {
+    if (ImGui::Combo("模型", &preset, "默认\0原始 (A)\0快速 (B)\0预设 3\0")) {
         settings.model.preset = preset;
         rebuild = true;
     }
     int style = int(settings.model.style);
-    if (ImGui::Combo("Style", &style, "Default\0Natural\0Cinematic\0")) {
+    if (ImGui::Combo("风格", &style, "默认\0自然\0电影\0")) {
         settings.model.style = style;
         rebuild = true;
     }
-    rebuild |= Slider("Intensity", &settings.model.intensity, 0, 2);
-    rebuild |= Slider("Local structure", &settings.model.localStructure, 0, 2);
-    rebuild |= Slider("Local tone", &settings.model.localTone, 0, 2);
-    rebuild |= ImGui::Checkbox("Automatic skin detection", &settings.model.autoMask);
-    ImGui::TextWrapped("Enable to adjust detected skin detail separately.");
+    rebuild |= Slider("强度", &settings.model.intensity, 0, 2);
+    rebuild |= Slider("局部结构", &settings.model.localStructure, 0, 2);
+    rebuild |= Slider("局部色调", &settings.model.localTone, 0, 2);
+    rebuild |= ImGui::Checkbox("自动皮肤检测", &settings.model.autoMask);
+    ImGui::TextWrapped("启用后可单独调整检测到的皮肤细节。");
     ImGui::BeginDisabled(!settings.model.autoMask);
-    rebuild |= Slider("Skin structure", &settings.model.skinStructure, 0, 2);
+    rebuild |= Slider("皮肤结构", &settings.model.skinStructure, 0, 2);
     ImGui::EndDisabled();
     int passes = int(settings.passes);
-    if (ImGui::SliderInt("Multipass", &passes, 1, neural::PipelineSettings::MaxPasses,
-                         passes == 1 ? "Off" : "%d", ImGuiSliderFlags_AlwaysClamp)) {
+    if (ImGui::SliderInt("多通道", &passes, 1, neural::PipelineSettings::MaxPasses,
+                         passes == 1 ? "关闭" : "%d", ImGuiSliderFlags_AlwaysClamp)) {
         settings.passes = unsigned(passes);
         rebuild = true;
     }
-    ImGui::TextWrapped("Do not use multipass other than to make bad memes.");
-    if (ImGui::CollapsingHeader("Picture")) {
-        changed |= ImGui::Checkbox("Enable picture adjustments", &settings.picture.enabled);
-        ImGui::TextWrapped("Adjusts the finished image after DLSS5 and before Lossless Scaling. "
-                           "Off or neutral adds no GPU work. Changes apply live.");
+    ImGui::TextWrapped("除了制作烂梗，否则不要使用多通道。");
+    if (ImGui::CollapsingHeader("画面")) {
+        changed |= ImGui::Checkbox("启用画面调整", &settings.picture.enabled);
+        ImGui::TextWrapped("在 DLSS5 之后、Lossless Scaling 之前调整成品画面。"
+                           "关闭或中性不会产生 GPU 开销。更改实时生效。");
         if (!settings.picture.enabled) ImGui::BeginDisabled();
         for (const auto &c : neural::PictureControls) {
             changed |= eam::ui::SliderFloat(c.label, &(settings.picture.*(c.value)), c.low, c.high,
@@ -416,39 +417,38 @@ EAM_EXPORT void AddonRenderSettings() {
             }
         }
         if (!settings.picture.enabled) ImGui::EndDisabled();
-        if (ImGui::Button("Reset picture")) {
+        if (ImGui::Button("重置画面")) {
             const bool wasEnabled = settings.picture.enabled;
             settings.picture = {};
             settings.picture.enabled = wasEnabled;
             changed = true;
         }
         if (!settings.composition.apply)
-            ImGui::TextWrapped("Showing the original: picture adjustments are also bypassed.");
+            ImGui::TextWrapped("当前显示原始画面：画面调整也被绕过。");
     }
-    if (ImGui::CollapsingHeader("Composition (advanced)")) {
-        changed |= Slider("Detail", &settings.composition.detail, 0, 4);
-        changed |= Slider("Colour", &settings.composition.colour, 0, 4);
-        changed |= Slider("Maximum luminance ratio", &settings.composition.maxRatio, 1, 8);
+    if (ImGui::CollapsingHeader("合成（高级）")) {
+        changed |= Slider("细节", &settings.composition.detail, 0, 4);
+        changed |= Slider("色彩", &settings.composition.colour, 0, 4);
+        changed |= Slider("最大亮度比", &settings.composition.maxRatio, 1, 8);
         int proxy = int(settings.composition.reversible);
-        if (ImGui::Combo("HDR proxy", &proxy,
-                         "Knee (default)\0Neutwo composed\0Neutwo replace\0Hybrid composed\0Hybrid replace\0")) {
+        if (ImGui::Combo("HDR 代理", &proxy,
+                         "拐点（默认）\0Neutwo 合成\0Neutwo 替换\0混合合成\0混合替换\0")) {
             settings.composition.reversible = proxy;
             rebuild = true;
         }
-        rebuild |= ImGui::SliderFloat("scRGB reference white", &settings.composition.whiteNits, 80, 1000, "%.0f nits",
+        rebuild |= ImGui::SliderFloat("scRGB 参考白", &settings.composition.whiteNits, 80, 1000, "%.0f nits",
                                       ImGuiSliderFlags_AlwaysClamp);
         int reconstruction = int(settings.composition.reconstruction);
-        if (ImGui::Combo("Reconstruction", &reconstruction, "Classic\0Matched residual (default)\0")) {
+        if (ImGui::Combo("重建", &reconstruction, "经典\0匹配残差（默认）\0")) {
             settings.composition.reconstruction = reconstruction;
             changed = true;
         }
-        changed |= ImGui::Checkbox("Apply model result", &settings.composition.apply);
+        changed |= ImGui::Checkbox("应用模型结果", &settings.composition.apply);
         ImGui::TextWrapped(
-            "Detail and colour default to 1. Replace proxies use the model image directly. Apply-off keeps "
-            "processing active for comparison. Working resolution and model changes rebuild the pipeline "
-            "after release; capture waits during rebuilding.");
+            "细节和色彩默认为 1。替换代理直接使用模型画面。关闭应用会保持处理运行以便对比。"
+            "工作分辨率和模型更改会在松开后重建管线；重建期间捕获会等待。");
     }
-    if (ImGui::Button("Retry initialization")) {
+    if (ImGui::Button("重试初始化")) {
         rebuild = true;
         changed = true;
     }
@@ -463,20 +463,20 @@ EAM_EXPORT void AddonRenderSettings() {
     }
     const auto snapshot = service->Snapshot();
     const auto &m = snapshot.metrics;
-    eam::ui::SectionLabel("Pipeline status");
+    eam::ui::SectionLabel("管线状态");
     const char *support = Support(host->GetRealFrameSupport());
-    ImGui::TextWrapped("%s", !snapshot.enabled ? "Disabled; original frames allowed" : support ? support : snapshot.status.c_str());
+    ImGui::TextWrapped("%s", !snapshot.enabled ? "已禁用；允许原始画面" : support ? support : snapshot.status.c_str());
     if (snapshot.enabled && support && snapshot.failed)
         ImGui::TextWrapped("%s", snapshot.status.c_str());
     if (snapshot.enabled && !snapshot.failed && snapshot.stage != neural::Stage::Idle)
         ImGui::TextWrapped("%s (%.1f s)", neural::StageName(snapshot.stage), snapshot.stageSeconds);
-    ImGui::Text("Capture %u x %u; model %u x %u", m.width, m.height, m.workingWidth, m.workingHeight);
+    ImGui::Text("捕获 %u x %u；模型 %u x %u", m.width, m.height, m.workingWidth, m.workingHeight);
     if (snapshot.ready && m.passes > 1)
-        ImGui::Text("Multipass: %u passes; model timing includes the full chain", m.passes);
-    ImGui::Text("NR GPU time %.2f ms; callback CPU %.2f ms", m.prepareMs + m.flowMs + m.modelMs + m.compositionMs,
+        ImGui::Text("多通道：%u 次处理；模型计时包含完整链路", m.passes);
+    ImGui::Text("NR GPU 时间 %.2f ms；回调 CPU %.2f ms", m.prepareMs + m.flowMs + m.modelMs + m.compositionMs,
                 lastCallbackMs.load());
-    ImGui::TextWrapped("GPU: prepare %.2f / flow wait+convert %.2f / model %.2f / compose %.2f ms", m.prepareMs,
+    ImGui::TextWrapped("GPU：准备 %.2f / 光流等待+转换 %.2f / 模型 %.2f / 合成 %.2f ms", m.prepareMs,
                        m.flowMs, m.modelMs, m.compositionMs);
-    ImGui::TextWrapped("CPU wait: frame slot %.2f ms / scene summary %.2f ms", m.slotWaitMs, m.summaryWaitMs);
-    ImGui::Text("Epoch: %llu processed / %llu cuts / %llu resets", m.accepted, m.cuts, m.resets);
+    ImGui::TextWrapped("CPU 等待：帧槽 %.2f ms / 场景摘要 %.2f ms", m.slotWaitMs, m.summaryWaitMs);
+    ImGui::Text("Epoch：%llu 已处理 / %llu 剪切 / %llu 重置", m.accepted, m.cuts, m.resets);
 }
