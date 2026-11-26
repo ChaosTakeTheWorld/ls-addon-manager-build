@@ -160,18 +160,45 @@ inline void ApplyStyle(ImGuiStyle& style) {
 
 } // namespace theme
 
+// ---------------------------------------------------------------------------------------
+// 逐字符绘制辅助：英文转大写并加字距，中文按 UTF-8 整字绘制。
+// 原实现逐字节 toupper，中文多字节序列被拆成无效单字节，渲染成问号。
+// ---------------------------------------------------------------------------------------
+inline int Utf8SequenceLength(unsigned char lead) {
+    if (lead < 0x80) return 1;
+    if ((lead & 0xE0) == 0xC0) return 2;
+    if ((lead & 0xF0) == 0xE0) return 3;
+    if ((lead & 0xF8) == 0xF0) return 4;
+    return 1;
+}
+
+// 判断整段文本是否全为 ASCII：决定是否套用英文大写 + 字距风格
+inline bool IsAsciiText(const char* text) {
+    for (const unsigned char* c = (const unsigned char*)text; *c; ++c)
+        if (*c >= 0x80) return false;
+    return true;
+}
+
 // A small uppercase label, letter-spaced, in the accent: the "ADD" / "QUEUE" / "LOG" headings of the other apps. It is the heading of a block
 // that cannot be closed, in the same accent as the title of an open SectionHeader, so an open section and a plain heading read alike.
 inline void SectionLabel(const char* text) {
     ImDrawList* dl = ImGui::GetWindowDrawList();
     const ImVec2 p = ImGui::GetCursorScreenPos();
-    const float spacing = (std::max)(1.5f, ImGui::GetFontSize() * 0.16f);
+    const bool ascii = IsAsciiText(text);
+    const float spacing = ascii ? (std::max)(1.5f, ImGui::GetFontSize() * 0.16f) : 0.0f;
     float x = p.x;
-    char up[2] = { 0, 0 };
-    for (const char* c = text; *c; ++c) {
-        up[0] = (char)toupper((unsigned char)*c);
-        dl->AddText(ImVec2(x, p.y), theme::U(theme::kAccent, ImGui::GetStyle().Alpha), up);
-        x += ImGui::CalcTextSize(up).x + spacing;
+    const ImU32 col = theme::U(theme::kAccent, ImGui::GetStyle().Alpha);
+    // 中文直接整串绘制，保持字形正确；英文沿用逐字大写 + 字距
+    if (!ascii) {
+        dl->AddText(ImVec2(x, p.y), col, text);
+        x += ImGui::CalcTextSize(text).x;
+    } else {
+        char up[2] = { 0, 0 };
+        for (const char* c = text; *c; ++c) {
+            up[0] = (char)toupper((unsigned char)*c);
+            dl->AddText(ImVec2(x, p.y), col, up);
+            x += ImGui::CalcTextSize(up).x + spacing;
+        }
     }
     ImGui::Dummy(ImVec2(x - p.x, ImGui::GetTextLineHeight()));
 }
@@ -320,16 +347,38 @@ inline bool SectionHeader(const char* label, bool defaultOpen = false) {
     const float cx = bx + box * 0.5f, cy = by + box * 0.5f, arm = box * 0.27f, thick = (std::max)(1.6f, ImGui::GetFontSize() * 0.12f);
     dl->AddLine(ImVec2(cx - arm, cy), ImVec2(cx + arm, cy), sign, thick);
     if (!open) dl->AddLine(ImVec2(cx, cy - arm), ImVec2(cx, cy + arm), sign, thick);
-    const float spacing = (std::max)(1.2f, ImGui::GetFontSize() * 0.12f);
+    const bool ascii = IsAsciiText(label);
+    const float spacing = ascii ? (std::max)(1.2f, ImGui::GetFontSize() * 0.12f) : 0.0f;
     float x = bx + box + ImGui::GetFontSize() * 0.65f;
     const float ty = p.y + (h - ImGui::GetTextLineHeight()) * 0.5f;
-    char up[2] = { 0, 0 };
     const ImU32 col = theme::U(open || hovered ? theme::kAccent : theme::kAccentDim, a);
-    for (const char* c = label; *c; ++c) {
-        up[0] = (char)toupper((unsigned char)*c);
-        if (x + ImGui::CalcTextSize(up).x > p.x + w - 4.0f) break;   // clip rather than spill out of the row
-        dl->AddText(ImVec2(x, ty), col, up);
-        x += ImGui::CalcTextSize(up).x + spacing;
+    // 中文直接整串绘制；英文沿用逐字大写 + 字距
+    if (!ascii) {
+        const float labelW = ImGui::CalcTextSize(label).x;
+        if (x + labelW > p.x + w - 4.0f) {
+            // 超出时按 UTF-8 码点截断，避免切在字符中间
+            const char* c = label;
+            while (*c) {
+                int len = Utf8SequenceLength((unsigned char)*c);
+                if (c + len > label + strlen(label) || x + ImGui::CalcTextSize(label, label + (c - label) + len).x > p.x + w - 4.0f) break;
+                c += len;
+            }
+            char clipped[256] = {};
+            size_t n = (size_t)(c - label);
+            if (n >= sizeof clipped) n = sizeof clipped - 1;
+            memcpy(clipped, label, n);
+            dl->AddText(ImVec2(x, ty), col, clipped);
+        } else {
+            dl->AddText(ImVec2(x, ty), col, label);
+        }
+    } else {
+        char up[2] = { 0, 0 };
+        for (const char* c = label; *c; ++c) {
+            up[0] = (char)toupper((unsigned char)*c);
+            if (x + ImGui::CalcTextSize(up).x > p.x + w - 4.0f) break;   // clip rather than spill out of the row
+            dl->AddText(ImVec2(x, ty), col, up);
+            x += ImGui::CalcTextSize(up).x + spacing;
+        }
     }
     dl->AddLine(ImVec2(p.x, p.y + h), ImVec2(p.x + w, p.y + h), theme::U(theme::kBorder, a), 1.0f);
     return open != 0;
