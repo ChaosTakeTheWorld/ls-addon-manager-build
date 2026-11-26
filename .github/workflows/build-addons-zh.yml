@@ -1,0 +1,66 @@
+# 汉化插件专用构建：下载厂商 SDK，编译四个插件 DLL（管理器本身不在此构建）。
+# 只产出 DLL，不打安装包，避免 NVIDIA/AMD/Intel 运行时的再分发许可问题。
+name: build-addons-zh
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2022
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch vendor SDKs
+        shell: pwsh
+        run: |
+          powershell -NoProfile -File tools/fetch_ngx_sdk.ps1 -AcceptNvidiaLicense
+          if ($LASTEXITCODE -ne 0) { throw 'NVIDIA SDK fetch failed' }
+          powershell -NoProfile -File tools/fetch_ffx_sdk.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'AMD FFX SDK fetch failed' }
+          powershell -NoProfile -File tools/fetch_xess_sdk.ps1
+          if ($LASTEXITCODE -ne 0) { throw 'Intel XeSS SDK fetch failed' }
+
+      - name: Build neural rendering addon
+        shell: pwsh
+        run: |
+          cmake -S addons/NeuralRendering -B addons/NeuralRendering/build -G "Visual Studio 17 2022" -A x64
+          cmake --build addons/NeuralRendering/build --config Release --target DLSSNR02 --parallel 2 -- /nr:false
+          if ($LASTEXITCODE -ne 0) { throw 'DLSSNR02 build failed' }
+
+      - name: Build upscaler addons
+        shell: pwsh
+        run: |
+          cmake -S addons/Upscalers -B addons/Upscalers/build -G "Visual Studio 17 2022" -A x64
+          cmake --build addons/Upscalers/build --config Release --target DLSS4DLAA FSR3UPSC XESSUPSC --parallel 2 -- /nr:false
+          if ($LASTEXITCODE -ne 0) { throw 'upscaler build failed' }
+
+      - name: Verify outputs
+        shell: pwsh
+        run: |
+          $files = @(
+            'addons/NeuralRendering/build/Release/DLSSNR02.dll',
+            'addons/Upscalers/build/Release/DLSS4DLAA.dll',
+            'addons/Upscalers/build/Release/FSR3UPSC.dll',
+            'addons/Upscalers/build/Release/XESSUPSC.dll'
+          )
+          foreach ($f in $files) {
+            if (-not (Test-Path $f)) { throw "Missing: $f" }
+            $hash = (Get-FileHash -Algorithm SHA256 $f).Hash
+            "$f  $((Get-Item $f).Length) bytes  $hash"
+          }
+
+      - name: Upload addon DLLs
+        uses: actions/upload-artifact@v4
+        with:
+          name: addons-zh
+          path: |
+            addons/NeuralRendering/build/Release/DLSSNR02.dll
+            addons/Upscalers/build/Release/DLSS4DLAA.dll
+            addons/Upscalers/build/Release/FSR3UPSC.dll
+            addons/Upscalers/build/Release/XESSUPSC.dll
+          retention-days: 30
